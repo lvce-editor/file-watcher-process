@@ -2,7 +2,6 @@
   "name": "@lvce-editor/file-watcher-process-monorepo",
   "version": "0.0.0-dev",
   "description": "File Watcher Process Monorepo",
-  "keywords": [],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lvce-editor/file-watcher-process.git"
@@ -14,8 +13,7 @@
   "scripts": {
     "build": "node packages/build/src/build.js",
     "format": "prettier --write .",
-    "lint": "echo ok",
-    "#lint": "eslint .",
+    "lint": "eslint .",
     "postinstall": "lerna bootstrap --ci",
     "test": "lerna run test",
     "test-integration": "lerna run test-integration",
