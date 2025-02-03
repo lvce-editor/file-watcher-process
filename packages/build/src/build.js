@@ -54,13 +54,9 @@ await mkdir(dist, { recursive: true })
 
 await bundleJs()
 
-await cp(join(root, 'packages', 'preview-process', 'files'), join(root, '.tmp', 'dist', 'files'), {
-  recursive: true,
-})
-
 const version = await getVersion()
 
-const packageJson = await readJson(join(root, 'packages', 'preview-process', 'package.json'))
+const packageJson = await readJson(join(root, 'packages', 'file-watcher-process', 'package.json'))
 
 delete packageJson.scripts
 delete packageJson.devDependencies
@@ -76,7 +72,7 @@ await writeJson(join(dist, 'package.json'), packageJson)
 
 await mkdir(join(dist, 'bin'))
 await writeFile(
-  join(dist, 'bin', 'previewProcess.js'),
+  join(dist, 'bin', 'fileWatcherProcess.js'),
   `#!/usr/bin/env node
 
 import '../dist/index.js'
@@ -86,7 +82,7 @@ import '../dist/index.js'
 await cp(join(root, 'README.md'), join(dist, 'README.md'))
 await cp(join(root, 'LICENSE'), join(dist, 'LICENSE'))
 await rm(join(root, '.tmp', 'node_modules'), { recursive: true, force: true })
-await cp(join(root, 'packages', 'preview-process', 'node_modules'), join(root, '.tmp', 'node_modules'), {
+await cp(join(root, 'packages', 'file-watcher-process', 'node_modules'), join(root, '.tmp', 'node_modules'), {
   recursive: true,
   force: true,
 })

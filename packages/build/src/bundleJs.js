@@ -9,7 +9,7 @@ import { root } from './root.js'
  * @type {import('rollup').RollupOptions}
  */
 const options = {
-  input: join(root, 'packages/preview-process/src/previewProcessMain.ts'),
+  input: join(root, 'packages/file-watcher-process/src/fileWatcherProcessMain.ts'),
   preserveEntrySignatures: 'strict',
   treeshake: {
     propertyReadSideEffects: false,
