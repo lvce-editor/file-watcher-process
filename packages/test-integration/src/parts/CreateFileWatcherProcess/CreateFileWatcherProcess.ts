@@ -8,6 +8,7 @@ const FILE_WATCHER_PROCESS_PATH = join(__dirname, '../../../../file-watcher-proc
 export interface FileWatcherProcess {
   readonly invoke: (method: string, ...params: unknown[]) => Promise<unknown>
   readonly childProcess: ChildProcess
+  readonly nextEvent: () => Promise<any>
   readonly [Symbol.dispose]: () => void
 }
 
@@ -18,6 +19,18 @@ export const createFileWatcherProcess = (options: { execArgv?: string[] } = {}):
   })
   return {
     childProcess,
+    async nextEvent() {
+      const { resolve, promise } = Promise.withResolvers()
+      const cleanup = (event: any): void => {
+        childProcess.off('message', handleMessage)
+        resolve(event)
+      }
+      const handleMessage = (event: any): void => {
+        cleanup(event)
+      }
+      childProcess.on('message', handleMessage)
+      return promise
+    },
     async invoke(method: string, ...params: any[]): Promise<void> {
       const { promise, resolve } = Promise.withResolvers<any>()
       const messageId = Math.random()
