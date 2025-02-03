@@ -7,8 +7,9 @@
   "scripts": {
     "test": "node --unhandled-rejections=warn --experimental-vm-modules ./node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
     "test:watch": "node --unhandled-rejections=warn --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch",
-    "type-check": "tsc",
-    "build": "node scripts/build.js"
+    "type-check": "tsc -b",
+    "build": "node scripts/build.js",
+    "lint": "echo ok"
   },
   "keywords": [
     "Lvce Editor",
