@@ -81,16 +81,3 @@ import '../dist/index.js'
 
 await cp(join(root, 'README.md'), join(dist, 'README.md'))
 await cp(join(root, 'LICENSE'), join(dist, 'LICENSE'))
-await rm(join(root, '.tmp', 'node_modules'), { recursive: true, force: true })
-await cp(join(root, 'packages', 'file-watcher-process', 'node_modules'), join(root, '.tmp', 'node_modules'), {
-  recursive: true,
-  force: true,
-})
-
-const indexJsPath = join(root, '.tmp', 'dist', 'dist', 'index.js')
-const oldContent = await readFile(indexJsPath, 'utf8')
-const newContent = oldContent.replace(
-  `const root = path.join(__dirname, '..', '..', '..');`,
-  `const root = path.join(__dirname, '..');`,
-)
-await writeFile(indexJsPath, newContent)
