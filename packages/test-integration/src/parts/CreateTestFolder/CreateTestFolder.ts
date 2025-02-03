@@ -5,7 +5,7 @@ import { mkdir, rm } from 'fs/promises'
 
 export const createTestFolder = async () => {
   const uuid = randomUUID()
-  const folderPath = join(Root.root, 'test-integration', uuid)
+  const folderPath = join(Root.root, '.tmp', 'test-integration', uuid)
   await rm(folderPath, { recursive: true, force: true })
   await mkdir(folderPath, { recursive: true })
   return {
