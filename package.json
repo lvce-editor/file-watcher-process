@@ -7,12 +7,12 @@
   "scripts": {
     "test": "node --unhandled-rejections=warn --experimental-vm-modules ./node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
     "test:watch": "node --unhandled-rejections=warn --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch",
-    "type-check": "tsc"
+    "type-check": "tsc -b",
+    "lint": "eslint ."
   },
   "keywords": [
     "Lvce Editor",
-    "File Watcher",
-    "Utility"
+    "File Watcher"
   ],
   "author": "Lvce Editor",
   "license": "MIT",
