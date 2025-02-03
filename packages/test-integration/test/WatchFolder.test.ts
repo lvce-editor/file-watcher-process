@@ -4,13 +4,13 @@ import { createTestFolder } from '../src/parts/CreateTestFolder/CreateTestFolder
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
 
-test.skip('file watcher - watch file', async () => {
+test.skip('file watcher - watch folder', async () => {
   const fileWatcherProcess = createFileWatcherProcess()
   const folder = await createTestFolder()
   // TODO maybe use uris instead of file paths
+  await fileWatcherProcess.invoke('FileWatcher.watchFile', folder.folderPath)
   const uri = join(folder.folderPath, 'a.txt')
-  await fileWatcherProcess.invoke('FileWatcher.watchFile', uri)
-  await writeFile(join(folder.folderPath, 'a.txt'), 'a')
+  await writeFile(uri, 'a')
 
   const event = await fileWatcherProcess.nextEvent()
   expect(event).toEqual([])
