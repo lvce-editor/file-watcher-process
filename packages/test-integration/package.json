@@ -1,0 +1,51 @@
+{
+  "name": "@lvce-editor/file-watcher-process-integration",
+  "version": "0.0.0-dev",
+  "type": "module",
+  "main": "",
+  "scripts": {
+    "test-integration": "node --unhandled-rejections=warn --experimental-vm-modules ./node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
+    "test:watch": "node --unhandled-rejections=warn --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "@lvce-editor/verror": "^1.6.0",
+    "chrome-remote-interface": "^0.33.2",
+    "get-port": "^7.1.0",
+    "ky": "^1.7.4",
+    "wait-port": "^1.1.0"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/chrome-remote-interface": "^0.31.14",
+    "@types/node": "^22.9.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "jest": {
+    "injectGlobals": false,
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
+    },
+    "testMatch": [
+      "**/test/**"
+    ]
+  }
+}
