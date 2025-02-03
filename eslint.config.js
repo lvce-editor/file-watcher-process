@@ -4,7 +4,7 @@ export default [
   ...config.default,
   ...config.recommendedNode,
   {
-    ignores: ['scripts', 'rollup.config.js', 'eslint.config.js', 'packages/build'],
+    ignores: ['packages/build'],
   },
   {
     files: ['**/*Main.ts'],
@@ -20,6 +20,7 @@ export default [
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/prefer-readonly-parameter-types': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-base-to-string': 'off',
     },
   },
 ]
