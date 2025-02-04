@@ -1,11 +1,13 @@
 import { watch } from 'chokidar'
+import * as NormalizeEvent from '../NormalizeEvent/NormalizeEvent.ts'
 import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
 
 export const watchFolder = async (path: string): Promise<void> => {
-  const callBackInternal = async (eventName: any, path: any, stats: any): Promise<void> => {
-    await SharedProcess.invoke('FileWatcher.handleChange', { eventName, path })
+  const callBackInternal = async (eventName: string, path: string, stats: any): Promise<void> => {
+    const event = NormalizeEvent.normalizeEvent(eventName, path)
+    await SharedProcess.invoke('FileWatcher.handleChange', event)
   }
-  const callback = (eventName: any, path: any, stats: any): void => {
+  const callback = (eventName: string, path: string, stats: any): void => {
     void callBackInternal(eventName, path, stats)
   }
 
