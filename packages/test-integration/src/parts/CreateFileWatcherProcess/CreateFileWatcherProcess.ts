@@ -29,7 +29,12 @@ export const createFileWatcherProcess = (options: { execArgv?: string[] } = {}):
         cleanup(event)
       }
       childProcess.on('message', handleMessage)
-      return promise
+      const result = await promise
+      if (result && typeof result === 'object' && 'method' in result && result.method === 'FileWatcher.handleChange') {
+        // @ts-ignore
+        return result.params[0]
+      }
+      return {}
     },
     async invoke(method: string, ...params: any[]): Promise<void> {
       const { promise, resolve } = Promise.withResolvers<any>()
