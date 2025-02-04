@@ -15,6 +15,11 @@ export const watchFolders = async ({
 }): Promise<void> => {
   const callBackInternal = async (eventName: string, path: string, stats: any): Promise<void> => {
     const event = NormalizeEvent2.normalizeEvent2(id, eventName, path)
+
+    // TODO maybe just use send instead of invoke or
+    // send the message to a websocket or message channel directly
+    // instead of routing events through shared process
+    // which might lock up the shared process in case there are many events
     await SharedProcess.invoke('FileWatcher.handleChange', event)
   }
   const callback = (eventName: string, path: string, stats: any): void => {
@@ -23,7 +28,10 @@ export const watchFolders = async ({
 
   const watchers = roots.map((root) => {
     const path = fileURLToPath(root)
-    const watcher = watch(path)
+    const watcher = watch(path, {
+      ignoreInitial: true,
+      ignorePermissionErrors: true,
+    })
     return watcher
   })
 
