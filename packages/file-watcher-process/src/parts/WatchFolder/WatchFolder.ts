@@ -5,5 +5,7 @@ export const watchFolder = async (path: string): Promise<void> => {
   const callback = async (event: any): Promise<void> => {
     await SharedProcess.invoke('FileWatcher.handleChange', event)
   }
-  await WatchInternal.watchInternal(path, { recursive: true }, callback)
+  // TODO maybe there can be a way to wait for the watcher to be created
+  // but not wait until all watch events have been fired
+  void WatchInternal.watchInternal(path, { recursive: true }, callback)
 }
