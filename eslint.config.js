@@ -15,12 +15,9 @@ export default [
   {
     files: ['**/*.ts'],
     rules: {
-      'n/no-unsupported-features/node-builtins': 'off',
-      'n/no-unsupported-features/es-syntax': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/prefer-readonly-parameter-types': 'off',
-      '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-base-to-string': 'off',
+      'n/no-unsupported-features/es-syntax': 'off',
+      '@typescript-eslint/prefer-readonly-parameter-types': 'off',
     },
   },
 ]
