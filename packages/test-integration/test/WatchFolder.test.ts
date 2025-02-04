@@ -8,7 +8,7 @@ test.skip('file watcher - watch folder', async () => {
   const fileWatcherProcess = createFileWatcherProcess()
   const folder = await createTestFolder()
   // TODO maybe use uris instead of file paths
-  await fileWatcherProcess.invoke('FileWatcher.watchFile', folder.folderPath)
+  await fileWatcherProcess.invoke('FileWatcher.watchFolder', folder.folderPath)
   const uri = join(folder.folderPath, 'a.txt')
   await writeFile(uri, 'a')
 
