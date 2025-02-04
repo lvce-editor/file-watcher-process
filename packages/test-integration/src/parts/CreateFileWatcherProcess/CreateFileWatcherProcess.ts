@@ -15,7 +15,7 @@ export interface FileWatcherProcess {
 export const createFileWatcherProcess = (options: { execArgv?: string[] } = {}): FileWatcherProcess => {
   const childProcess = fork(FILE_WATCHER_PROCESS_PATH, ['--ipc-type=node-forked-process'], {
     execArgv: options.execArgv || ['--experimental-strip-types'],
-    stdio: 'pipe',
+    stdio: 'inherit',
   })
   return {
     childProcess,
