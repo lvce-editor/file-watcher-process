@@ -1,13 +1,9 @@
-import { VError } from '@lvce-editor/verror'
-import * as fs from 'node:fs/promises'
+import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
+import * as WatchFolderInternal from '../WatchFolderInternal/WatchFolderInternal.ts'
 
-export const watchFolder = async (path: string, callback: any): Promise<void> => {
-  try {
-    const watcher = fs.watch(path, { recursive: true })
-    for await (const event of watcher) {
-      callback(event)
-    }
-  } catch (error) {
-    console.error(`[file-watcher-process] ${new VError(error, `Failed to watch folder`)}`)
+export const watchFolder = async (path: string): Promise<void> => {
+  const callback = async (event: any): Promise<void> => {
+    await SharedProcess.invoke('FileWatcher.handleChange', event)
   }
+  await WatchFolderInternal.watchFolderInternal(path, callback)
 }
