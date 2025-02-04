@@ -1,5 +1,5 @@
+import type { WatchOptions } from 'node:fs'
 import { VError } from '@lvce-editor/verror'
-import { WatchOptions } from 'node:fs'
 import * as fs from 'node:fs/promises'
 
 export const watchInternal = async (
