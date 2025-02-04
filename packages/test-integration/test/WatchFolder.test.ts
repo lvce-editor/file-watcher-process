@@ -1,18 +1,18 @@
 import { expect, test } from '@jest/globals'
-import { createFileWatcherProcess } from '../src/parts/CreateFileWatcherProcess/CreateFileWatcherProcess.ts'
-import { createTestFolder } from '../src/parts/CreateTestFolder/CreateTestFolder.ts'
 import { rename, rm, writeFile } from 'fs/promises'
 import { join } from 'path'
+import { pathToFileURL } from 'url'
+import { createFileWatcherProcess } from '../src/parts/CreateFileWatcherProcess/CreateFileWatcherProcess.ts'
+import { createTestFolder } from '../src/parts/CreateTestFolder/CreateTestFolder.ts'
 
 test('file watcher - watch folder', async () => {
   const fileWatcherProcess = createFileWatcherProcess()
   const folder = await createTestFolder()
-  // TODO maybe use uris instead of file paths
-  await fileWatcherProcess.invoke('FileWatcher.watchFolder', folder.folderPath)
-  const uri = join(folder.folderPath, 'a.txt')
-  await writeFile(uri, 'a')
+  await fileWatcherProcess.invoke('FileWatcher.watchFolder', pathToFileURL(folder.folderPath).toString())
+  const path = join(folder.folderPath, 'a.txt')
+  await writeFile(path, 'a')
   const event = await fileWatcherProcess.nextEvent()
-  expect(event).toEqual({ eventName: 'add', path: join(folder.folderPath, 'a.txt') })
+  expect(event).toEqual({ eventName: 'add', uri: pathToFileURL(path).toString() })
   fileWatcherProcess[Symbol.dispose]()
   await folder[Symbol.asyncDispose]()
 })
@@ -20,12 +20,12 @@ test('file watcher - watch folder', async () => {
 test('watch folder - file removed', async () => {
   const fileWatcherProcess = createFileWatcherProcess()
   const folder = await createTestFolder()
-  const uri = join(folder.folderPath, 'a.txt')
-  await writeFile(uri, 'a')
-  await fileWatcherProcess.invoke('FileWatcher.watchFolder', folder.folderPath)
-  await rm(uri)
+  const path = join(folder.folderPath, 'a.txt')
+  await writeFile(path, 'a')
+  await fileWatcherProcess.invoke('FileWatcher.watchFolder', pathToFileURL(folder.folderPath).toString())
+  await rm(path)
   const event = await fileWatcherProcess.nextEvent()
-  expect(event).toEqual({ eventName: 'unlink', path: join(folder.folderPath, 'a.txt') })
+  expect(event).toEqual({ eventName: 'unlink', uri: pathToFileURL(path).toString() })
   fileWatcherProcess[Symbol.dispose]()
   await folder[Symbol.asyncDispose]()
 })
@@ -33,12 +33,12 @@ test('watch folder - file removed', async () => {
 test('watch folder - file renamed', async () => {
   const fileWatcherProcess = createFileWatcherProcess()
   const folder = await createTestFolder()
-  const uri = join(folder.folderPath, 'a.txt')
-  await writeFile(uri, 'a')
-  await fileWatcherProcess.invoke('FileWatcher.watchFolder', folder.folderPath)
-  await rename(uri, join(folder.folderPath, 'b.txt'))
+  const path = join(folder.folderPath, 'a.txt')
+  await writeFile(path, 'a')
+  await fileWatcherProcess.invoke('FileWatcher.watchFolder', pathToFileURL(folder.folderPath).toString())
+  await rename(path, join(folder.folderPath, 'b.txt'))
   const event = await fileWatcherProcess.nextEvent()
-  expect(event).toEqual({ eventName: 'add', path: join(folder.folderPath, 'b.txt') })
+  expect(event).toEqual({ eventName: 'add', uri: pathToFileURL(join(folder.folderPath, 'b.txt')).toString() })
   fileWatcherProcess[Symbol.dispose]()
   await folder[Symbol.asyncDispose]()
 })
