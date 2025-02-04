@@ -2,6 +2,7 @@ import { watch } from 'chokidar'
 import { fileURLToPath } from 'node:url'
 import * as NormalizeEvent from '../NormalizeEvent/NormalizeEvent.ts'
 import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
+import * as WaitForWatcherToBeReady from '../WaitForWatcherToBeReady/WaitForWatcherToBeReady.ts'
 
 export const watchFolder = async (uri: string): Promise<void> => {
   const callBackInternal = async (eventName: string, path: string, stats: any): Promise<void> => {
@@ -16,8 +17,5 @@ export const watchFolder = async (uri: string): Promise<void> => {
   const watcher = watch(path)
   watcher.on('all', callback)
 
-  const { resolve, promise } = Promise.withResolvers<void>()
-  watcher.on('ready', resolve)
-
-  await promise
+  await WaitForWatcherToBeReady.waitForWatcherToBeReady(watcher)
 }
