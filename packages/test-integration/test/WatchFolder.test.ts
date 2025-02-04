@@ -12,7 +12,7 @@ test('file watcher - watch folder', async () => {
   const uri = join(folder.folderPath, 'a.txt')
   await writeFile(uri, 'a')
   const event = await fileWatcherProcess.nextEvent()
-  expect(event).toEqual({ eventType: 'rename', filename: 'a.txt' })
+  expect(event).toEqual({ eventName: 'addDir', path: folder.folderPath })
   fileWatcherProcess[Symbol.dispose]()
   await folder[Symbol.asyncDispose]()
 })
