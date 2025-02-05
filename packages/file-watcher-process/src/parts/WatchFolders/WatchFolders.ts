@@ -34,10 +34,8 @@ export const watchFolders = async ({
     })
     return watcher
   })
-
+  await Promise.all(watchers.map(WaitForWatcherToBeReady.waitForWatcherToBeReady))
   for (const watcher of watchers) {
     watcher.on('all', callback)
   }
-
-  await Promise.all(watchers.map(WaitForWatcherToBeReady.waitForWatcherToBeReady))
 }
