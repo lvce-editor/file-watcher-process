@@ -17,5 +17,5 @@ export const Auto = (): number => {
     return ElectronUtilityProcess
   }
 
-  throw new Error('[preview-process] unknown ipc type')
+  throw new Error('[file-watcher-process] unknown ipc type')
 }
