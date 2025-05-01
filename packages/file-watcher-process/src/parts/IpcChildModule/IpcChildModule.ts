@@ -1,4 +1,4 @@
-import type { RpcClient } from '@lvce-editor/rpc'
+import type { Rpc } from '@lvce-editor/rpc'
 import {
   ElectronMessagePortRpcClient,
   ElectronUtilityProcessRpcClient,
@@ -7,16 +7,20 @@ import {
 } from '@lvce-editor/rpc'
 import * as IpcChildType from '../IpcChildType/IpcChildType.ts'
 
-export const getModule = (method: number): RpcClient<any> => {
+interface RpcFactory {
+  (optiona: any): Promise<Rpc>
+}
+
+export const getModule = (method: number): RpcFactory => {
   switch (method) {
     case IpcChildType.NodeForkedProcess:
-      return NodeForkedProcessRpcClient
+      return NodeForkedProcessRpcClient.create
     case IpcChildType.NodeWorker:
-      return NodeWorkerRpcClient
+      return NodeWorkerRpcClient.create
     case IpcChildType.ElectronUtilityProcess:
-      return ElectronUtilityProcessRpcClient
+      return ElectronUtilityProcessRpcClient.create
     case IpcChildType.ElectronMessagePort:
-      return ElectronMessagePortRpcClient
+      return ElectronMessagePortRpcClient.create
     default:
       throw new Error('unexpected ipc type')
   }
