@@ -65,6 +65,9 @@ delete packageJson.jest
 delete packageJson.xo
 delete packageJson.directories
 delete packageJson.nodemonConfig
+delete packageJson.dependencies['@lvce-editor/rpc']
+delete packageJson.dependencies['@lvce-editor/rpc-registry']
+delete packageJson.dependencies['@lvce-editor/verror']
 packageJson.version = version
 packageJson.main = 'dist/index.js'
 
