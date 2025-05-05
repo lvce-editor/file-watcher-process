@@ -47,8 +47,8 @@
     }
   },
   "dependencies": {
-    "@lvce-editor/rpc": "^2.1.0",
-    "@lvce-editor/rpc-registry": "^1.1.0",
+    "@lvce-editor/rpc": "^2.2.0",
+    "@lvce-editor/rpc-registry": "^2.8.0",
     "@lvce-editor/verror": "^1.6.0",
     "chokidar": "^4.0.3"
   },
