@@ -9,12 +9,12 @@
   "description": "",
   "devDependencies": {
     "@babel/preset-typescript": "^7.27.1",
-    "@lvce-editor/verror": "^1.6.0",
+    "@lvce-editor/verror": "^1.7.0",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@types/node": "^22.13.0",
-    "esbuild": "^0.25.4",
-    "execa": "^9.5.3",
+    "esbuild": "^0.25.5",
+    "execa": "^9.6.0",
     "rollup": "^4.34.3"
   },
   "engines": {
