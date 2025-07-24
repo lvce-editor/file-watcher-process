@@ -18,6 +18,7 @@ export default [
       '@typescript-eslint/no-base-to-string': 'off',
       'n/no-unsupported-features/es-syntax': 'off',
       '@typescript-eslint/prefer-readonly-parameter-types': 'off',
+      'jest/no-restricted-jest-methods': 'off',
     },
   },
 ]
