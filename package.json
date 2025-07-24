@@ -12,6 +12,7 @@
   "main": "",
   "scripts": {
     "build": "node packages/build/src/build.js",
+    "build:watch": "./packages/build/node_modules/.bin/esbuild --format=esm --platform=node --bundle --external:electron --external:trash --external:ws --watch packages/file-watcher-process/src/fileWatcherProcessMain.ts --outfile=packages/file-watcher-process/dist/index.js",
     "format": "prettier --write .",
     "lint": "eslint .",
     "postinstall": "lerna bootstrap --ci",
