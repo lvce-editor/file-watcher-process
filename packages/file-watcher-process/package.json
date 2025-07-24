@@ -47,15 +47,15 @@
     }
   },
   "dependencies": {
-    "@lvce-editor/rpc": "^4.1.0",
-    "@lvce-editor/rpc-registry": "^2.27.0",
+    "@lvce-editor/rpc": "^4.11.0",
+    "@lvce-editor/rpc-registry": "^2.62.0",
     "@lvce-editor/verror": "^1.7.0",
     "chokidar": "^4.0.3"
   },
   "devDependencies": {
-    "@jest/globals": "^30.0.0",
+    "@jest/globals": "^30.0.5",
     "@types/chokidar": "^2.1.7",
-    "jest": "^30.0.0",
+    "jest": "^30.0.5",
     "ts-jest": "^29.4.0"
   },
   "engines": {
