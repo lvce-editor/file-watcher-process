@@ -13,10 +13,15 @@ const callback = (eventName: string, path: string, stats: any): void => {
   void callBackInternal(eventName, path, stats)
 }
 
+const errorCallback = (error: any): void => {
+  console.error(`[file-watcher-process] ${error}`)
+}
+
 export const watchFolder = async (uri: string): Promise<void> => {
   const path = fileURLToPath(uri)
   const watcher = watch(path)
   watcher.on('all', callback)
+  watcher.on('error', errorCallback)
 
   await WaitForWatcherToBeReady.waitForWatcherToBeReady(watcher)
 }
