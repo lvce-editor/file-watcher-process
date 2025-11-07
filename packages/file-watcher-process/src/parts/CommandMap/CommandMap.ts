@@ -6,6 +6,7 @@ import * as WatchFolders from '../WatchFolders/WatchFolders.ts'
 export const commandMap = {
   'HandleElectronMessagePort.handleElectronMessagePort': HandleElectronMessagePort.handleElectronMessagePort,
   'FileWatcher.watchFile': WatchFile.watchFile,
+  'FileWatcher.watchFile2': WatchFile.watchFile2,
   'FileWatcher.watchFolder': WatchFolder.watchFolder,
   'FileWatcher.watchFolders': WatchFolders.watchFolders,
 }
