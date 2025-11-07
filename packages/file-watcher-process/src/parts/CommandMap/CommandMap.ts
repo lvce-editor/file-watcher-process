@@ -2,11 +2,13 @@ import * as HandleElectronMessagePort from '../HandleElectronMessagePort/HandleE
 import * as WatchFile from '../WatchFile/WatchFile.ts'
 import * as WatchFolder from '../WatchFolder/WatchFolder.ts'
 import * as WatchFolders from '../WatchFolders/WatchFolders.ts'
+import * as DisposeWatcher from '../DisposeWatcher/DisposeWatcher.ts'
 
 export const commandMap = {
-  'HandleElectronMessagePort.handleElectronMessagePort': HandleElectronMessagePort.handleElectronMessagePort,
+  'FileWatcher.dispose': DisposeWatcher.disposeWatcher,
   'FileWatcher.watchFile': WatchFile.watchFile,
   'FileWatcher.watchFile2': WatchFile.watchFile2,
   'FileWatcher.watchFolder': WatchFolder.watchFolder,
   'FileWatcher.watchFolders': WatchFolders.watchFolders,
+  'HandleElectronMessagePort.handleElectronMessagePort': HandleElectronMessagePort.handleElectronMessagePort,
 }
