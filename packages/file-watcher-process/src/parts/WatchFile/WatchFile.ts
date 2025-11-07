@@ -1,4 +1,5 @@
 import * as Assert from '@lvce-editor/assert'
+import { fileURLToPath } from 'node:url'
 import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
 import * as WatchInternal from '../WatchInternal/WatchInternal.ts'
 
@@ -18,5 +19,6 @@ export const watchFile2 = async (id: number, uri: string): Promise<void> => {
       ...event,
     })
   }
-  await WatchInternal.watchInternal(uri, {}, callback)
+  const path = fileURLToPath(uri)
+  await WatchInternal.watchInternal(path, {}, callback)
 }
