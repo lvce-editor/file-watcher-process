@@ -1,8 +1,8 @@
+import * as DisposeWatcher from '../DisposeWatcher/DisposeWatcher.ts'
 import * as HandleElectronMessagePort from '../HandleElectronMessagePort/HandleElectronMessagePort.ts'
 import * as WatchFile from '../WatchFile/WatchFile.ts'
 import * as WatchFolder from '../WatchFolder/WatchFolder.ts'
 import * as WatchFolders from '../WatchFolders/WatchFolders.ts'
-import * as DisposeWatcher from '../DisposeWatcher/DisposeWatcher.ts'
 
 export const commandMap = {
   'FileWatcher.dispose': DisposeWatcher.disposeWatcher,

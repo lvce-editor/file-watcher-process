@@ -1,8 +1,8 @@
 import * as Assert from '@lvce-editor/assert'
 import { fileURLToPath } from 'node:url'
 import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
-import * as WatchInternal from '../WatchInternal/WatchInternal.ts'
 import * as WatcherState from '../WatcherState/WatcherState.ts'
+import * as WatchInternal from '../WatchInternal/WatchInternal.ts'
 
 export const watchFile = async (path: string): Promise<void> => {
   const callback = async (event: any): Promise<void> => {
