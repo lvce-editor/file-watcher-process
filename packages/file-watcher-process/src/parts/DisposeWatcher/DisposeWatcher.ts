@@ -3,7 +3,7 @@ import * as WatcherState from '../WatcherState/WatcherState.ts'
 
 export const disposeWatcher = (id: number): void => {
   Assert.number(id)
-  if (WatcherState.has(id)) {
+  if (!WatcherState.has(id)) {
     return
   }
   const controller = WatcherState.get(id)
