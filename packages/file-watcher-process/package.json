@@ -47,17 +47,17 @@
     }
   },
   "dependencies": {
-    "@lvce-editor/assert": "^1.4.0",
-    "@lvce-editor/rpc": "^4.11.0",
-    "@lvce-editor/rpc-registry": "^2.62.0",
+    "@lvce-editor/assert": "^1.5.1",
+    "@lvce-editor/rpc": "^6.4.0",
+    "@lvce-editor/rpc-registry": "^9.27.0",
     "@lvce-editor/verror": "^1.7.0",
-    "chokidar": "^4.0.3"
+    "chokidar": "^5.0.0"
   },
   "devDependencies": {
-    "@jest/globals": "^30.0.5",
+    "@jest/globals": "^30.4.1",
     "@types/chokidar": "^2.1.7",
-    "jest": "^30.0.5",
-    "ts-jest": "^29.4.0"
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11"
   },
   "engines": {
     "node": ">=22"

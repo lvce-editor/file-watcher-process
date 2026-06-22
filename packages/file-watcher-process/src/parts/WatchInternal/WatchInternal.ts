@@ -13,6 +13,7 @@ export const watchInternal = async (
       await callback(event)
     }
   } catch (error) {
-    console.error(`[file-watcher-process] ${new VError(error, `Failed to watch`)}`)
+    const message = new VError(error, 'Failed to watch')
+    console.error(`[file-watcher-process] ${message}`)
   }
 }

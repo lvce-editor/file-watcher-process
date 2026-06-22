@@ -8,13 +8,13 @@
   "license": "MIT",
   "description": "",
   "devDependencies": {
-    "@babel/preset-typescript": "^7.27.1",
+    "@babel/preset-typescript": "^7.20.1",
     "@lvce-editor/verror": "^1.7.0",
-    "@rollup/plugin-babel": "^6.0.4",
-    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-babel": "^7.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^22.13.0",
-    "esbuild": "^0.25.8",
-    "execa": "^9.6.0",
+    "esbuild": "^0.28.1",
+    "execa": "^9.6.1",
     "rollup": "^4.34.3"
   },
   "engines": {

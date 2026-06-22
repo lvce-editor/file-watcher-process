@@ -5,7 +5,7 @@ export const normalizeEvent2 = (id: number, eventName: string, path: string): No
   const uri = pathToFileURL(path).toString()
   return {
     eventName,
-    uri,
     id,
+    uri,
   }
 }

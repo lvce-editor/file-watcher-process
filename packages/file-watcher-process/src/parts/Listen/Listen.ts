@@ -6,8 +6,8 @@ import * as RpcRegistry from '../RpcRegistry/RpcRegistry.ts'
 
 export const listen = async (): Promise<void> => {
   const rpc = await IpcChild.listen({
-    method: IpcChildType.Auto(),
     commandMap: CommandMap.commandMap,
+    method: IpcChildType.Auto(),
   })
   RpcRegistry.set(RpcId.SharedProcess, rpc)
 }
