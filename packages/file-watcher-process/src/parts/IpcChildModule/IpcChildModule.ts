@@ -13,14 +13,14 @@ interface RpcFactory {
 
 export const getModule = (method: number): RpcFactory => {
   switch (method) {
+    case IpcChildType.ElectronMessagePort:
+      return ElectronMessagePortRpcClient.create
+    case IpcChildType.ElectronUtilityProcess:
+      return ElectronUtilityProcessRpcClient.create
     case IpcChildType.NodeForkedProcess:
       return NodeForkedProcessRpcClient.create
     case IpcChildType.NodeWorker:
       return NodeWorkerRpcClient.create
-    case IpcChildType.ElectronUtilityProcess:
-      return ElectronUtilityProcessRpcClient.create
-    case IpcChildType.ElectronMessagePort:
-      return ElectronMessagePortRpcClient.create
     default:
       throw new Error('unexpected ipc type')
   }

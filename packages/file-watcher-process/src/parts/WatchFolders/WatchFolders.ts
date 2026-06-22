@@ -5,9 +5,9 @@ import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
 import * as WaitForWatcherToBeReady from '../WaitForWatcherToBeReady/WaitForWatcherToBeReady.ts'
 
 export const watchFolders = async ({
-  roots,
-  id,
   exclude,
+  id,
+  roots,
 }: {
   roots: readonly string[]
   id: number
