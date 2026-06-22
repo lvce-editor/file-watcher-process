@@ -33,6 +33,9 @@
     "prettier": "^3.8.4",
     "typescript": "^6.0.3"
   },
+  "overrides": {
+    "browserslist": "4.28.2"
+  },
   "engines": {
     "node": ">=22"
   }
