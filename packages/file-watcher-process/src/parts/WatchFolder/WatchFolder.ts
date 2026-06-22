@@ -1,4 +1,4 @@
-import { watch } from 'chokidar'
+import { FSWatcher } from 'chokidar'
 import { fileURLToPath } from 'node:url'
 import * as NormalizeEvent from '../NormalizeEvent/NormalizeEvent.ts'
 import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
@@ -19,9 +19,11 @@ const errorCallback = (error: any): void => {
 
 export const watchFolder = async (uri: string): Promise<void> => {
   const path = fileURLToPath(uri)
-  const watcher = watch(path)
+  const watcher = new FSWatcher()
   watcher.on('all', callback)
   watcher.on('error', errorCallback)
+  const readyPromise = WaitForWatcherToBeReady.waitForWatcherToBeReady(watcher)
+  watcher.add(path)
 
-  await WaitForWatcherToBeReady.waitForWatcherToBeReady(watcher)
+  await readyPromise
 }

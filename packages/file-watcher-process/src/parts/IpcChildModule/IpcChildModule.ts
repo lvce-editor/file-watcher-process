@@ -8,7 +8,7 @@ import {
 import * as IpcChildType from '../IpcChildType/IpcChildType.ts'
 
 interface RpcFactory {
-  (optiona: any): Promise<Rpc>
+  (options: any): Promise<Rpc>
 }
 
 export const getModule = (method: number): RpcFactory => {

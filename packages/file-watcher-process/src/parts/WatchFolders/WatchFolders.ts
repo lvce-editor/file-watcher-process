@@ -1,8 +1,12 @@
-import { watch } from 'chokidar'
+import { FSWatcher } from 'chokidar'
 import { fileURLToPath } from 'node:url'
 import * as NormalizeEvent2 from '../NormalizeEvent2/NormalizeEvent2.ts'
 import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
 import * as WaitForWatcherToBeReady from '../WaitForWatcherToBeReady/WaitForWatcherToBeReady.ts'
+
+const errorCallback = (error: any): void => {
+  console.error(`[file-watcher-process] ${error}`)
+}
 
 export const watchFolders = async ({
   exclude,
@@ -26,16 +30,24 @@ export const watchFolders = async ({
     void callBackInternal(eventName, path, stats)
   }
 
-  const watchers = roots.map((root) => {
+  const watcherEntries = roots.map((root) => {
     const path = fileURLToPath(root)
-    const watcher = watch(path, {
+    const watcher = new FSWatcher({
       ignoreInitial: true,
       ignorePermissionErrors: true,
     })
-    return watcher
+    watcher.on('error', errorCallback)
+    const readyPromise = WaitForWatcherToBeReady.waitForWatcherToBeReady(watcher)
+    watcher.add(path)
+    return { readyPromise, watcher }
   })
-  await Promise.all(watchers.map(WaitForWatcherToBeReady.waitForWatcherToBeReady))
-  for (const watcher of watchers) {
+  try {
+    await Promise.all(watcherEntries.map(({ readyPromise }) => readyPromise))
+  } catch (error) {
+    await Promise.allSettled(watcherEntries.map(({ watcher }) => watcher.close()))
+    throw error
+  }
+  for (const { watcher } of watcherEntries) {
     watcher.on('all', callback)
   }
 }
