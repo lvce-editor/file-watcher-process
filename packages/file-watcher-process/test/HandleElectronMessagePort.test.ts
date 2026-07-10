@@ -13,6 +13,12 @@ jest.unstable_mockModule('../src/parts/IpcChild/IpcChild.ts', () => {
   }
 })
 
+jest.unstable_mockModule('../src/parts/IpcChildType/IpcChildType.ts', () => {
+  return {
+    ElectronMessagePort: 4,
+  }
+})
+
 const IpcChild = await import('../src/parts/IpcChild/IpcChild.ts')
 const IpcChildType = await import('../src/parts/IpcChildType/IpcChildType.ts')
 const RpcRegistry = await import('../src/parts/RpcRegistry/RpcRegistry.ts')
