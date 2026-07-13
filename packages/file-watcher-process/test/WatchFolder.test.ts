@@ -4,6 +4,8 @@ import { pathToFileURL } from 'node:url'
 class MockWatcher {
   private readonly listeners = new Map<string, Set<(...args: any[]) => void>>()
 
+  closed = false
+
   on(eventName: string, listener: (...args: any[]) => void): this {
     const listeners = this.listeners.get(eventName) || new Set()
     listeners.add(listener)
@@ -19,6 +21,10 @@ class MockWatcher {
 
   add(path: string): this {
     return this
+  }
+
+  async close(): Promise<void> {
+    this.closed = true
   }
 
   emit(eventName: string, ...args: any[]): void {
@@ -43,15 +49,6 @@ const createWatcher = (): MockWatcher => {
   return watcher
 }
 
-const getPromiseResult = async (promise: Promise<void>): Promise<unknown> => {
-  try {
-    await promise
-    return 'resolved'
-  } catch (error) {
-    return error
-  }
-}
-
 jest.unstable_mockModule('chokidar', () => {
   return {
     FSWatcher: jest.fn(createWatcher),
@@ -60,8 +57,9 @@ jest.unstable_mockModule('chokidar', () => {
 })
 
 const WatchFolder = await import('../src/parts/WatchFolder/WatchFolder.ts')
+const WatchFolders = await import('../src/parts/WatchFolders/WatchFolders.ts')
 
-test('watchFolder - rejects when watcher emits ENOSPC before ready', async () => {
+test('watchFolder - returns an error result when watcher emits ENOSPC before ready', async () => {
   const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
   try {
     const promise = WatchFolder.watchFolder(pathToFileURL('/tmp').toString())
@@ -72,13 +70,63 @@ test('watchFolder - rejects when watcher emits ENOSPC before ready', async () =>
     state.watcher?.emit('error', error)
 
     const result = await Promise.race([
-      getPromiseResult(promise),
+      promise,
       new Promise((resolve) => {
         setTimeout(resolve, 10, 'timeout')
       }),
     ])
 
-    expect(result).toBe(error)
+    expect(result).toEqual({
+      error: {
+        code: 'ENOSPC',
+        message: 'ENOSPC: System limit for number of file watchers reached',
+        name: 'Error',
+        stack: expect.any(String),
+      },
+      ok: false,
+    })
+    expect(state.watcher?.closed).toBe(true)
+  } finally {
+    consoleError.mockRestore()
+  }
+})
+
+test('watchFolders - returns success when watcher is ready', async () => {
+  const promise = WatchFolders.watchFolders({
+    exclude: [],
+    id: 1,
+    roots: [pathToFileURL('/tmp').toString()],
+  })
+
+  state.watcher?.emit('ready')
+
+  await expect(promise).resolves.toEqual({ ok: true })
+})
+
+test('watchFolders - returns an error result when watcher emits ENOSPC before ready', async () => {
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+  try {
+    const promise = WatchFolders.watchFolders({
+      exclude: [],
+      id: 1,
+      roots: [pathToFileURL('/tmp').toString()],
+    })
+    const error = Object.assign(new Error('ENOSPC: System limit for number of file watchers reached'), {
+      code: 'ENOSPC',
+    })
+
+    state.watcher?.emit('error', error)
+
+    await expect(promise).resolves.toEqual({
+      error: {
+        code: 'ENOSPC',
+        message: 'ENOSPC: System limit for number of file watchers reached',
+        name: 'Error',
+        stack: expect.any(String),
+      },
+      ok: false,
+    })
+    expect(state.watcher?.closed).toBe(true)
   } finally {
     consoleError.mockRestore()
   }
