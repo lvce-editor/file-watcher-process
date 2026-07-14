@@ -1,5 +1,6 @@
 import { FSWatcher } from 'chokidar'
 import { fileURLToPath } from 'node:url'
+import * as GetInotifyWatchCount from '../GetInotifyWatchCount/GetInotifyWatchCount.ts'
 import * as NormalizeEvent2 from '../NormalizeEvent2/NormalizeEvent2.ts'
 import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
 import * as WaitForWatcherToBeReady from '../WaitForWatcherToBeReady/WaitForWatcherToBeReady.ts'
@@ -52,5 +53,9 @@ export const watchFolders = async ({
   for (const { watcher } of watcherEntries) {
     watcher.on('all', callback)
   }
-  return WatchResult.success
+  const inotifyWatchCount = await GetInotifyWatchCount.getInotifyWatchCount()
+  if (inotifyWatchCount === undefined) {
+    return WatchResult.success
+  }
+  return WatchResult.successWithInotifyWatchCount(inotifyWatchCount)
 }
