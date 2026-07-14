@@ -5,6 +5,13 @@ test('success', () => {
   expect(WatchResult.success).toEqual({ ok: true })
 })
 
+test('successWithInotifyWatchCount', () => {
+  expect(WatchResult.successWithInotifyWatchCount(123)).toEqual({
+    inotifyWatchCount: 123,
+    ok: true,
+  })
+})
+
 test('fromError - error with code', () => {
   const error = Object.assign(new Error('watch limit reached'), { code: 'ENOSPC' })
 

@@ -6,6 +6,7 @@ export interface SerializedError {
 }
 
 export interface WatchSuccessResult {
+  readonly inotifyWatchCount?: number
   readonly ok: true
 }
 
@@ -18,6 +19,13 @@ export type WatchResult = WatchSuccessResult | WatchErrorResult
 
 export const success: WatchSuccessResult = {
   ok: true,
+}
+
+export const successWithInotifyWatchCount = (inotifyWatchCount: number): WatchSuccessResult => {
+  return {
+    inotifyWatchCount,
+    ok: true,
+  }
 }
 
 const getErrorCode = (error: unknown): string | undefined => {

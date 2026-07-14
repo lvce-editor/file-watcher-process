@@ -49,10 +49,18 @@ const createWatcher = (): MockWatcher => {
   return watcher
 }
 
+const getInotifyWatchCount = jest.fn(async (): Promise<number | undefined> => 123)
+
 jest.unstable_mockModule('chokidar', () => {
   return {
     FSWatcher: jest.fn(createWatcher),
     watch: jest.fn(createWatcher),
+  }
+})
+
+jest.unstable_mockModule('../src/parts/GetInotifyWatchCount/GetInotifyWatchCount.ts', () => {
+  return {
+    getInotifyWatchCount,
   }
 })
 
@@ -92,6 +100,19 @@ test('watchFolder - returns an error result when watcher emits ENOSPC before rea
 })
 
 test('watchFolders - returns success when watcher is ready', async () => {
+  const promise = WatchFolders.watchFolders({
+    exclude: [],
+    id: 1,
+    roots: [pathToFileURL('/tmp').toString()],
+  })
+
+  state.watcher?.emit('ready')
+
+  await expect(promise).resolves.toEqual({ inotifyWatchCount: 123, ok: true })
+})
+
+test('watchFolders - returns success without a count when inotify data is unavailable', async () => {
+  getInotifyWatchCount.mockResolvedValueOnce(undefined)
   const promise = WatchFolders.watchFolders({
     exclude: [],
     id: 1,

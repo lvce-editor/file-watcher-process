@@ -16,7 +16,12 @@ test('watch single folder', async () => {
     roots,
     exclude,
   }
-  await fileWatcherProcess.invoke('FileWatcher.watchFolders', options)
+  const result = await fileWatcherProcess.invoke('FileWatcher.watchFolders', options)
+  if (process.platform === 'linux') {
+    expect(result).toEqual({ inotifyWatchCount: expect.any(Number), ok: true })
+  } else {
+    expect(result).toEqual({ ok: true })
+  }
   const path = join(folder.folderPath, 'a.txt')
   await writeFile(path, 'a')
   const event = await fileWatcherProcess.nextEvent()
