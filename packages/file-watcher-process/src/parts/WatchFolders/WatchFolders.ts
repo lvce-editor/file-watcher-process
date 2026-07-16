@@ -11,6 +11,13 @@ const errorCallback = (error: any): void => {
   console.error(`[file-watcher-process] ${error}`)
 }
 
+const createIgnored = (exclude: readonly string[]): ((path: string) => boolean) => {
+  const excludedNames = new Set(exclude)
+  return (path: string): boolean => {
+    return path.split(/[\\/]/).some((part) => excludedNames.has(part))
+  }
+}
+
 export const watchFolders = async ({
   exclude,
   id,
@@ -38,6 +45,7 @@ export const watchFolders = async ({
     for (const root of roots) {
       const path = fileURLToPath(root)
       const watcher = new FSWatcher({
+        ignored: createIgnored(exclude),
         ignoreInitial: true,
         ignorePermissionErrors: true,
       })

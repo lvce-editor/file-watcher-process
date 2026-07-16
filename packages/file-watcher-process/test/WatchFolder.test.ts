@@ -41,10 +41,11 @@ class MockWatcher {
   }
 }
 
-const state: { watcher?: MockWatcher } = {}
+const state: { options?: any; watcher?: MockWatcher } = {}
 
-const createWatcher = (): MockWatcher => {
+const createWatcher = (options?: any): MockWatcher => {
   const watcher = new MockWatcher()
+  state.options = options
   state.watcher = watcher
   return watcher
 }
@@ -110,6 +111,22 @@ test('watchFolders - returns success when watcher is ready', async () => {
   state.watcher?.emit('ready')
 
   await expect(promise).resolves.toEqual({ inotifyWatchCount: 123, ok: true })
+})
+
+test('watchFolders - excludes configured folder names', async () => {
+  const promise = WatchFolders.watchFolders({
+    exclude: ['.git', 'node_modules'],
+    id: 1,
+    roots: [pathToFileURL('/tmp').toString()],
+  })
+
+  expect(state.options.ignored('/tmp/workspace/.git/config')).toBe(true)
+  expect(state.options.ignored('/tmp/workspace/node_modules/package/index.js')).toBe(true)
+  expect(state.options.ignored('C:\\workspace\\node_modules\\package\\index.js')).toBe(true)
+  expect(state.options.ignored('/tmp/workspace/src/index.js')).toBe(false)
+
+  state.watcher?.emit('ready')
+  await promise
 })
 
 test('watchFolders - closes watcher when disposed', async () => {
