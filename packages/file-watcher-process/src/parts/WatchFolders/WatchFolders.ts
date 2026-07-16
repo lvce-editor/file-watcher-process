@@ -4,6 +4,7 @@ import * as GetInotifyWatchCount from '../GetInotifyWatchCount/GetInotifyWatchCo
 import * as NormalizeEvent2 from '../NormalizeEvent2/NormalizeEvent2.ts'
 import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
 import * as WaitForWatcherToBeReady from '../WaitForWatcherToBeReady/WaitForWatcherToBeReady.ts'
+import * as WatcherState from '../WatcherState/WatcherState.ts'
 import * as WatchResult from '../WatchResult/WatchResult.ts'
 
 const errorCallback = (error: any): void => {
@@ -53,6 +54,15 @@ export const watchFolders = async ({
   for (const { watcher } of watcherEntries) {
     watcher.on('all', callback)
   }
+  const controller = new AbortController()
+  controller.signal.addEventListener(
+    'abort',
+    () => {
+      void Promise.allSettled(watcherEntries.map(({ watcher }) => watcher.close()))
+    },
+    { once: true },
+  )
+  WatcherState.add(id, controller)
   const inotifyWatchCount = await GetInotifyWatchCount.getInotifyWatchCount()
   if (inotifyWatchCount === undefined) {
     return WatchResult.success
