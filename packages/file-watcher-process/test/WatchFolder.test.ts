@@ -66,6 +66,7 @@ jest.unstable_mockModule('../src/parts/GetInotifyWatchCount/GetInotifyWatchCount
 
 const WatchFolder = await import('../src/parts/WatchFolder/WatchFolder.ts')
 const WatchFolders = await import('../src/parts/WatchFolders/WatchFolders.ts')
+const DisposeWatcher = await import('../src/parts/DisposeWatcher/DisposeWatcher.ts')
 
 test('watchFolder - returns an error result when watcher emits ENOSPC before ready', async () => {
   const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
@@ -109,6 +110,21 @@ test('watchFolders - returns success when watcher is ready', async () => {
   state.watcher?.emit('ready')
 
   await expect(promise).resolves.toEqual({ inotifyWatchCount: 123, ok: true })
+})
+
+test('watchFolders - closes watcher when disposed', async () => {
+  const promise = WatchFolders.watchFolders({
+    exclude: [],
+    id: 2,
+    roots: [pathToFileURL('/tmp').toString()],
+  })
+
+  state.watcher?.emit('ready')
+  await promise
+
+  DisposeWatcher.disposeWatcher(2)
+
+  expect(state.watcher?.closed).toBe(true)
 })
 
 test('watchFolders - returns success without a count when inotify data is unavailable', async () => {
