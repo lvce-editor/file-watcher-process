@@ -51,7 +51,8 @@
     "@lvce-editor/rpc": "^6.4.0",
     "@lvce-editor/rpc-registry": "^9.27.0",
     "@lvce-editor/verror": "^1.7.0",
-    "chokidar": "^5.0.0"
+    "chokidar": "^5.0.0",
+    "ignore": "^5.3.2"
   },
   "devDependencies": {
     "@jest/globals": "^30.4.1",
