@@ -1,4 +1,7 @@
-import { expect, jest, test } from '@jest/globals'
+import { afterEach, expect, jest, test } from '@jest/globals'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 class MockWatcher {
@@ -69,6 +72,14 @@ const WatchFolder = await import('../src/parts/WatchFolder/WatchFolder.ts')
 const WatchFolders = await import('../src/parts/WatchFolders/WatchFolders.ts')
 const DisposeWatcher = await import('../src/parts/DisposeWatcher/DisposeWatcher.ts')
 
+const temporaryDirectories: string[] = []
+
+afterEach(async () => {
+  const paths = [...temporaryDirectories]
+  temporaryDirectories.length = 0
+  await Promise.all(paths.map((path) => rm(path, { force: true, recursive: true })))
+})
+
 test('watchFolder - returns an error result when watcher emits ENOSPC before ready', async () => {
   const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
   try {
@@ -127,6 +138,38 @@ test('watchFolders - excludes configured folder names', async () => {
 
   state.watcher?.emit('ready')
   await promise
+})
+
+test('createIgnored - excludes paths from the root gitignore', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'file-watcher-gitignore-'))
+  temporaryDirectories.push(root)
+  await writeFile(join(root, '.gitignore'), 'dist/\n*.log\n')
+
+  const ignored = await WatchFolders.createIgnored(root, ['node_modules'], true)
+
+  expect(ignored(join(root, 'dist'), { isDirectory: () => true })).toBe(true)
+  expect(ignored(join(root, 'debug.log'))).toBe(true)
+  expect(ignored(join(root, 'src', 'index.ts'))).toBe(false)
+})
+
+test('createIgnored - falls back to explicit exclusions when the root has no gitignore', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'file-watcher-no-gitignore-'))
+  temporaryDirectories.push(root)
+
+  const ignored = await WatchFolders.createIgnored(root, ['node_modules'], true)
+
+  expect(ignored(join(root, 'node_modules', 'package', 'index.js'))).toBe(true)
+  expect(ignored(join(root, 'src', 'index.ts'))).toBe(false)
+})
+
+test('createIgnored - does not load the root gitignore when disabled', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'file-watcher-disabled-gitignore-'))
+  temporaryDirectories.push(root)
+  await writeFile(join(root, '.gitignore'), '*.log\n')
+
+  const ignored = await WatchFolders.createIgnored(root, [], false)
+
+  expect(ignored(join(root, 'debug.log'))).toBe(false)
 })
 
 test('watchFolders - closes watcher when disposed', async () => {

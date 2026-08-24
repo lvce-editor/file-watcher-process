@@ -23,7 +23,7 @@ const options = {
       objectShorthand: true,
     },
   },
-  external: ['electron', 'ws', 'chokidar'],
+  external: ['electron', 'ws', 'chokidar', 'ignore'],
   plugins: [
     babel({
       babelHelpers: 'bundled',
