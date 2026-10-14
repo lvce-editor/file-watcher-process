@@ -48,9 +48,19 @@ test('scoped disk watcher includes dependency and config changes, creation, dele
     })
     expect(result).toMatchObject({ ok: true })
     const change = async (eventName: string, path: string, action: () => Promise<void>): Promise<void> => {
-      const event = fileWatcherProcess.nextEvent()
-      await action()
-      expect(await event).toEqual({ eventName, id: 2, uri: pathToFileURL(path).toString() })
+      const uri = pathToFileURL(path).toString()
+      const { promise, resolve } = Promise.withResolvers<unknown>()
+      const onMessage = (message: any): void => {
+        const event = message.params?.[0]
+        if (message.method === 'FileWatcher.handleChange' && event.eventName === eventName && event.uri === uri) resolve(event)
+      }
+      fileWatcherProcess.childProcess.on('message', onMessage)
+      try {
+        await action()
+        expect(await promise).toEqual({ eventName, id: 2, uri })
+      } finally {
+        fileWatcherProcess.childProcess.off('message', onMessage)
+      }
     }
     await change('change', dependency, () => writeFile(dependency, 'export const value: string'))
     await change('change', config, () => writeFile(config, '{"compilerOptions":{"strict":true}}'))
@@ -63,7 +73,11 @@ test('scoped disk watcher includes dependency and config changes, creation, dele
     const { promise: renamed, resolve } = Promise.withResolvers<void>()
     const onMessage = (message: any): void => {
       if (message.method !== 'FileWatcher.handleChange') return
-      renameEvents.push(message.params[0])
+      const event = message.params[0]
+      const matches =
+        (event.eventName === 'unlink' && event.uri === pathToFileURL(dependency).toString()) ||
+        (event.eventName === 'add' && event.uri === pathToFileURL(destination).toString())
+      if (matches && !renameEvents.some((previous: any) => previous.eventName === event.eventName)) renameEvents.push(event)
       if (renameEvents.length === 2) resolve()
     }
     fileWatcherProcess.childProcess.on('message', onMessage)
@@ -79,6 +93,41 @@ test('scoped disk watcher includes dependency and config changes, creation, dele
     )
     await fileWatcherProcess.invoke('FileWatcher.dispose', 2)
   } finally {
+    fileWatcherProcess[Symbol.dispose]()
+    await folder[Symbol.asyncDispose]()
+  }
+})
+
+test('shallow parent watches observe creation of missing config files without watching nested sources', async () => {
+  const fileWatcherProcess = createFileWatcherProcess()
+  const folder = await createTestFolder()
+  const root = folder.folderPath
+  await mkdir(join(root, 'unrelated'))
+  const events: any[] = []
+  const { promise, resolve } = Promise.withResolvers<void>()
+  const onMessage = (message: any): void => {
+    if (message.method !== 'FileWatcher.handleChange') return
+    events.push(message.params[0])
+    if (message.params[0].uri === pathToFileURL(join(root, 'tsconfig.json')).toString()) resolve()
+  }
+  fileWatcherProcess.childProcess.on('message', onMessage)
+  try {
+    await expect(
+      fileWatcherProcess.invoke('FileWatcher.watchFolders', {
+        depth: 0,
+        exclude: [],
+        id: 3,
+        roots: [pathToFileURL(root).toString()],
+      }),
+    ).resolves.toMatchObject({ ok: true })
+    await writeFile(join(root, 'unrelated', 'nested.ts'), 'export const unrelated = true')
+    await writeFile(join(root, 'tsconfig.json'), '{}')
+    await promise
+    expect(events).toContainEqual({ eventName: 'add', id: 3, uri: pathToFileURL(join(root, 'tsconfig.json')).toString() })
+    expect(events.some((event) => event.uri.endsWith('/nested.ts'))).toBe(false)
+    await fileWatcherProcess.invoke('FileWatcher.dispose', 3)
+  } finally {
+    fileWatcherProcess.childProcess.off('message', onMessage)
     fileWatcherProcess[Symbol.dispose]()
     await folder[Symbol.asyncDispose]()
   }

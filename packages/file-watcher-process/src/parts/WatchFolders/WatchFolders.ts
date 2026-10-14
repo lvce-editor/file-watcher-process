@@ -59,12 +59,14 @@ const send = (event: unknown): void => {
 }
 
 export const watchFolders = async ({
+  depth,
   exclude,
   id,
   roots,
   useGitIgnore = false,
 }: {
   roots: readonly string[]
+  depth?: number
   id: number
   exclude: readonly string[]
   useGitIgnore?: boolean
@@ -106,6 +108,7 @@ export const watchFolders = async ({
       const ignored = useGitIgnore ? await createIgnored(path, exclude, true) : createExcludedNamesFilter(exclude)
       controller.signal.throwIfAborted()
       const watcher = new FSWatcher({
+        ...(depth !== undefined && { depth }),
         ignored,
         ignoreInitial: true,
         ignorePermissionErrors: false,

@@ -298,3 +298,10 @@ test('watchFolders - duplicate registrations preserve the existing watcher', asy
   first?.emit('ready')
   await promise
 })
+
+test('watchFolders - passes an optional depth limit to the backend', async () => {
+  const promise = WatchFolders.watchFolders({ depth: 0, exclude: [], id: 1, roots: [diskRoot] })
+  expect(state.options.depth).toBe(0)
+  state.watcher?.emit('ready')
+  await promise
+})
