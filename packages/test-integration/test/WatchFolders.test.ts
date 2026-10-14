@@ -132,3 +132,58 @@ test('shallow parent watches observe creation of missing config files without wa
     await folder[Symbol.asyncDispose]()
   }
 })
+
+test('targeted shallow watches report config creation and changes while ignoring other files', async () => {
+  const process = createFileWatcherProcess()
+  const folder = await createTestFolder()
+  const root = folder.folderPath
+  const config = join(root, 'tsconfig.json')
+  const events: any[] = []
+  const onMessage = (message: any): void => {
+    if (message.method === 'FileWatcher.handleChange') events.push(message.params[0])
+  }
+  process.childProcess.on('message', onMessage)
+  try {
+    await writeFile(join(root, 'private.sock'), 'not a config')
+    await expect(
+      process.invoke('FileWatcher.watchFolders', {
+        childNames: ['tsconfig.json'],
+        depth: 0,
+        exclude: [],
+        id: 4,
+        roots: [pathToFileURL(root).toString()],
+      }),
+    ).resolves.toMatchObject({ ok: true })
+    const created = new Promise<void>((resolve) =>
+      process.childProcess.on('message', (message: any) => {
+        if (
+          message.method === 'FileWatcher.handleChange' &&
+          message.params[0].eventName === 'add' &&
+          message.params[0].uri === pathToFileURL(config).toString()
+        )
+          resolve()
+      }),
+    )
+    await writeFile(join(root, 'new-unrelated.txt'), 'ignored')
+    await writeFile(config, '{}')
+    await created
+    expect(events.every((event) => event.uri === pathToFileURL(config).toString())).toBe(true)
+    const changed = new Promise<void>((resolve) =>
+      process.childProcess.on('message', (message: any) => {
+        if (
+          message.method === 'FileWatcher.handleChange' &&
+          message.params[0].eventName === 'change' &&
+          message.params[0].uri === pathToFileURL(config).toString()
+        )
+          resolve()
+      }),
+    )
+    await writeFile(config, '{"compilerOptions":{"strict":true}}')
+    await changed
+    await process.invoke('FileWatcher.dispose', 4)
+  } finally {
+    process.childProcess.off('message', onMessage)
+    process[Symbol.dispose]()
+    await folder[Symbol.asyncDispose]()
+  }
+})
