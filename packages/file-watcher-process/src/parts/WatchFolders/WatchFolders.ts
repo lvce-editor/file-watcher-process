@@ -54,13 +54,15 @@ export const createIgnored = async (
 
 const canonical = (path: string): string => (process.platform === 'win32' ? resolve(path).toLowerCase() : resolve(path))
 
+const normalizeName = (name: string): string => (['win32', 'darwin'].includes(process.platform) ? name.toLowerCase() : name)
+
 export const createChildNamesFilter = (root: string, childNames: readonly string[]): ((path: string) => boolean) => {
   const base = canonical(root)
-  const names = new Set(childNames.map((name) => (process.platform === 'win32' ? name.toLowerCase() : name)))
+  const names = new Set(childNames.map(normalizeName))
   return (path: string): boolean => {
     const current = canonical(path)
     if (current === base || base.startsWith(current.endsWith(sep) ? current : `${current}${sep}`)) return false
-    return dirname(current) !== base || !names.has(basename(current))
+    return dirname(current) !== base || !names.has(normalizeName(basename(current)))
   }
 }
 

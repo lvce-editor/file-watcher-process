@@ -312,6 +312,7 @@ test('child name scope permits the root and missing config files but skips unrel
   expect(ignored(root)).toBe(false)
   expect(ignored(tmpdir())).toBe(false)
   expect(ignored(join(root, 'tsconfig.json'))).toBe(false)
+  expect(ignored(join(root, 'TSCONFIG.JSON'))).toBe(!['win32', 'darwin'].includes(process.platform))
   expect(ignored(join(root, 'private.sock'))).toBe(true)
   expect(ignored(join(root, 'nested', 'tsconfig.json'))).toBe(true)
 })
