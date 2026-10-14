@@ -305,3 +305,23 @@ test('watchFolders - passes an optional depth limit to the backend', async () =>
   state.watcher?.emit('ready')
   await promise
 })
+
+test('child name scope permits the root and missing config files but skips unrelated children', () => {
+  const root = join(tmpdir(), 'watch-target-root')
+  const ignored = WatchFolders.createChildNamesFilter(root, ['tsconfig.json'])
+  expect(ignored(root)).toBe(false)
+  expect(ignored(tmpdir())).toBe(false)
+  expect(ignored(join(root, 'tsconfig.json'))).toBe(false)
+  expect(ignored(join(root, 'TSCONFIG.JSON'))).toBe(!['win32', 'darwin'].includes(process.platform))
+  expect(ignored(join(root, 'private.sock'))).toBe(true)
+  expect(ignored(join(root, 'nested', 'tsconfig.json'))).toBe(true)
+})
+
+test.each([
+  { childNames: ['tsconfig.json'], depth: undefined },
+  { childNames: ['../tsconfig.json'], depth: 0 },
+])('invalid child scope is rejected before registration %#', async (scope) => {
+  await expect(WatchFolders.watchFolders({ ...scope, exclude: [], id: 10, roots: [diskRoot] })).resolves.toMatchObject({
+    ok: false,
+  })
+})

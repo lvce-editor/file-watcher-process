@@ -1,7 +1,7 @@
 import { FSWatcher } from 'chokidar'
 import ignore, { type Ignore } from 'ignore'
 import { readFile } from 'node:fs/promises'
-import { relative } from 'node:path'
+import { basename, dirname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as GetInotifyWatchCount from '../GetInotifyWatchCount/GetInotifyWatchCount.ts'
 import * as NormalizeEvent2 from '../NormalizeEvent2/NormalizeEvent2.ts'
@@ -52,6 +52,20 @@ export const createIgnored = async (
   }
 }
 
+const canonical = (path: string): string => (process.platform === 'win32' ? resolve(path).toLowerCase() : resolve(path))
+
+const normalizeName = (name: string): string => (['win32', 'darwin'].includes(process.platform) ? name.toLowerCase() : name)
+
+export const createChildNamesFilter = (root: string, childNames: readonly string[]): ((path: string) => boolean) => {
+  const base = canonical(root)
+  const names = new Set(childNames.map(normalizeName))
+  return (path: string): boolean => {
+    const current = canonical(path)
+    if (current === base || base.startsWith(current.endsWith(sep) ? current : `${current}${sep}`)) return false
+    return dirname(current) !== base || !names.has(normalizeName(basename(current)))
+  }
+}
+
 const send = (event: unknown): void => {
   void SharedProcess.invoke('FileWatcher.handleChange', event).catch((error) => {
     console.error(`[file-watcher-process] ${error}`)
@@ -59,6 +73,7 @@ const send = (event: unknown): void => {
 }
 
 export const watchFolders = async ({
+  childNames,
   depth,
   exclude,
   id,
@@ -66,11 +81,20 @@ export const watchFolders = async ({
   useGitIgnore = false,
 }: {
   roots: readonly string[]
+  childNames?: readonly string[]
   depth?: number
   id: number
   exclude: readonly string[]
   useGitIgnore?: boolean
 }): Promise<WatchResult.WatchResult> => {
+  if (
+    childNames !== undefined &&
+    (depth !== 0 ||
+      !Array.isArray(childNames) ||
+      childNames.some((name) => typeof name !== 'string' || !name || /[\\/]/.test(name)))
+  ) {
+    return WatchResult.fromError(new Error('childNames require depth 0 and immediate child names'))
+  }
   if (WatcherState.has(id)) {
     return WatchResult.fromError(new Error(`watcher ${id} is already registered`))
   }
@@ -105,7 +129,10 @@ export const watchFolders = async ({
     for (const root of roots) {
       controller.signal.throwIfAborted()
       const path = fileURLToPath(root)
-      const ignored = useGitIgnore ? await createIgnored(path, exclude, true) : createExcludedNamesFilter(exclude)
+      const excluded = useGitIgnore ? await createIgnored(path, exclude, true) : createExcludedNamesFilter(exclude)
+      const childFilter = childNames === undefined ? undefined : createChildNamesFilter(path, childNames)
+      const ignored = (candidate: string, stats?: { isDirectory(): boolean }): boolean =>
+        excluded(candidate, stats) || !!childFilter?.(candidate)
       controller.signal.throwIfAborted()
       const watcher = new FSWatcher({
         ...(depth !== undefined && { depth }),
