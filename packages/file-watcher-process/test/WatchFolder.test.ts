@@ -45,6 +45,8 @@ class MockWatcher {
 }
 
 const state: { options?: any; watcher?: MockWatcher } = {}
+const events: unknown[] = []
+const diskRoot = pathToFileURL(tmpdir()).toString()
 
 const createWatcher = (options?: any): MockWatcher => {
   const watcher = new MockWatcher()
@@ -68,6 +70,12 @@ jest.unstable_mockModule('../src/parts/GetInotifyWatchCount/GetInotifyWatchCount
   }
 })
 
+jest.unstable_mockModule('../src/parts/SharedProcess/SharedProcess.ts', () => ({
+  invoke: async (_method: string, event: unknown): Promise<void> => {
+    events.push(event)
+  },
+}))
+
 const WatchFolder = await import('../src/parts/WatchFolder/WatchFolder.ts')
 const WatchFolders = await import('../src/parts/WatchFolders/WatchFolders.ts')
 const DisposeWatcher = await import('../src/parts/DisposeWatcher/DisposeWatcher.ts')
@@ -75,6 +83,9 @@ const DisposeWatcher = await import('../src/parts/DisposeWatcher/DisposeWatcher.
 const temporaryDirectories: string[] = []
 
 afterEach(async () => {
+  DisposeWatcher.disposeWatcher(1)
+  DisposeWatcher.disposeWatcher(2)
+  events.length = 0
   const paths = [...temporaryDirectories]
   temporaryDirectories.length = 0
   await Promise.all(paths.map((path) => rm(path, { force: true, recursive: true })))
@@ -227,4 +238,63 @@ test('watchFolders - returns an error result when watcher emits ENOSPC before re
   } finally {
     consoleError.mockRestore()
   }
+})
+
+test('watchFolders - forwards changes observed during setup without a readiness gap', async () => {
+  const promise = WatchFolders.watchFolders({ exclude: ['.git'], id: 1, roots: [diskRoot] })
+  const dependency = join(tmpdir(), 'node_modules', 'example', 'index.d.ts')
+  state.watcher?.emit('all', 'change', dependency)
+  state.watcher?.emit('ready')
+  await promise
+  expect(events).toEqual([{ eventName: 'change', id: 1, uri: pathToFileURL(dependency).toString() }])
+  expect(state.options.ignorePermissionErrors).toBe(false)
+})
+
+test('watchFolders - reports a runtime failure and stops the failed watcher', async () => {
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+  try {
+    const promise = WatchFolders.watchFolders({ exclude: [], id: 1, roots: [diskRoot] })
+    state.watcher?.emit('ready')
+    await promise
+    const error = Object.assign(new Error('watch limit reached'), { code: 'ENOSPC' })
+    state.watcher?.emit('error', error)
+    state.watcher?.emit('all', 'change', '/tmp/stale.ts')
+    expect(events).toEqual([
+      {
+        error: { code: 'ENOSPC', message: 'watch limit reached', name: 'Error', stack: expect.any(String) },
+        eventName: 'error',
+        id: 1,
+        ok: false,
+        uri: '',
+      },
+    ])
+    expect(state.watcher?.closed).toBe(true)
+  } finally {
+    consoleError.mockRestore()
+  }
+})
+
+test('watchFolders - disposal while waiting for ready closes and resolves setup', async () => {
+  const promise = WatchFolders.watchFolders({ exclude: [], id: 1, roots: [diskRoot] })
+  DisposeWatcher.disposeWatcher(1)
+  await expect(promise).resolves.toMatchObject({ error: { message: expect.stringContaining('aborted') }, ok: false })
+  expect(state.watcher?.closed).toBe(true)
+  state.watcher?.emit('all', 'change', '/tmp/stale.ts')
+  expect(events).toEqual([])
+})
+
+test('watchFolders - invalid later roots close earlier pending watchers', async () => {
+  const promise = WatchFolders.watchFolders({ exclude: [], id: 1, roots: [diskRoot, 'memfs:///unsupported'] })
+  await expect(promise).resolves.toMatchObject({ ok: false })
+  expect(state.watcher?.closed).toBe(true)
+})
+
+test('watchFolders - duplicate registrations preserve the existing watcher', async () => {
+  const promise = WatchFolders.watchFolders({ exclude: [], id: 1, roots: [diskRoot] })
+  const first = state.watcher
+  await expect(WatchFolders.watchFolders({ exclude: [], id: 1, roots: [diskRoot] })).resolves.toMatchObject({ ok: false })
+  expect(state.watcher).toBe(first)
+  expect(first?.closed).toBe(false)
+  first?.emit('ready')
+  await promise
 })

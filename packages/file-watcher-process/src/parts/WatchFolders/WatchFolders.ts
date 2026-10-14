@@ -12,10 +12,6 @@ import * as WatchResult from '../WatchResult/WatchResult.ts'
 
 const createIgnore = ignore as unknown as () => Ignore
 
-const errorCallback = (error: any): void => {
-  console.error(`[file-watcher-process] ${error}`)
-}
-
 const loadGitIgnore = async (root: string, enabled: boolean): Promise<Ignore | undefined> => {
   if (!enabled) {
     return undefined
@@ -37,7 +33,7 @@ export const createIgnored = async (
   root: string,
   exclude: readonly string[],
   useGitIgnore: boolean,
-): Promise<((path: string, stats?: { isDirectory(): boolean }) => boolean)> => {
+): Promise<(path: string, stats?: { isDirectory(): boolean }) => boolean> => {
   const isExcludedName = createExcludedNamesFilter(exclude)
   const gitIgnore = await loadGitIgnore(root, useGitIgnore)
   return (path: string, stats?: { isDirectory(): boolean }): boolean => {
@@ -56,6 +52,12 @@ export const createIgnored = async (
   }
 }
 
+const send = (event: unknown): void => {
+  void SharedProcess.invoke('FileWatcher.handleChange', event).catch((error) => {
+    console.error(`[file-watcher-process] ${error}`)
+  })
+}
+
 export const watchFolders = async ({
   exclude,
   id,
@@ -67,54 +69,64 @@ export const watchFolders = async ({
   exclude: readonly string[]
   useGitIgnore?: boolean
 }): Promise<WatchResult.WatchResult> => {
-  const callBackInternal = async (eventName: string, path: string, stats: any): Promise<void> => {
-    const event = NormalizeEvent2.normalizeEvent2(id, eventName, path)
-
-    // TODO maybe just use send instead of invoke or
-    // send the message to a websocket or message channel directly
-    // instead of routing events through shared process
-    // which might lock up the shared process in case there are many events
-    await SharedProcess.invoke('FileWatcher.handleChange', event)
+  if (WatcherState.has(id)) {
+    return WatchResult.fromError(new Error(`watcher ${id} is already registered`))
   }
-  const callback = (eventName: string, path: string, stats: any): void => {
-    void callBackInternal(eventName, path, stats)
-  }
-
+  const controller = new AbortController()
   const watcherEntries: { readonly readyPromise: Promise<void>; readonly watcher: FSWatcher }[] = []
+  let ready = false
+  let closing: Promise<unknown> | undefined
+  const callback = (eventName: string, path: string): void => {
+    if (!controller.signal.aborted) {
+      send(NormalizeEvent2.normalizeEvent2(id, eventName, path))
+    }
+  }
+  const errorCallback = (error: unknown): void => {
+    console.error(`[file-watcher-process] ${error}`)
+    if (controller.signal.aborted) return
+    if (ready) {
+      send({ ...WatchResult.fromError(error), eventName: 'error', id, uri: '' })
+    }
+    controller.abort(error)
+  }
+  controller.signal.addEventListener(
+    'abort',
+    () => {
+      WatcherState.remove(id)
+      closing = Promise.allSettled(watcherEntries.map(({ watcher }) => watcher.close()))
+    },
+    { once: true },
+  )
+  // Register before asynchronous setup so disposal also cancels a pending watch.
+  WatcherState.add(id, controller)
   try {
     for (const root of roots) {
+      controller.signal.throwIfAborted()
       const path = fileURLToPath(root)
       const ignored = useGitIgnore ? await createIgnored(path, exclude, true) : createExcludedNamesFilter(exclude)
+      controller.signal.throwIfAborted()
       const watcher = new FSWatcher({
         ignored,
         ignoreInitial: true,
-        ignorePermissionErrors: true,
+        ignorePermissionErrors: false,
       })
       watcher.on('error', errorCallback)
-      const readyPromise = WaitForWatcherToBeReady.waitForWatcherToBeReady(watcher)
+      watcher.on('all', callback)
+      const readyPromise = WaitForWatcherToBeReady.waitForWatcherToBeReady(watcher, controller.signal)
+      // Later roots can fail before Promise.all is reached.
+      void readyPromise.catch(() => {})
       watcherEntries.push({ readyPromise, watcher })
       watcher.add(path)
     }
     await Promise.all(watcherEntries.map(({ readyPromise }) => readyPromise))
+    controller.signal.throwIfAborted()
+    ready = true
+    const inotifyWatchCount = await GetInotifyWatchCount.getInotifyWatchCount()
+    controller.signal.throwIfAborted()
+    return inotifyWatchCount === undefined ? WatchResult.success : WatchResult.successWithInotifyWatchCount(inotifyWatchCount)
   } catch (error) {
-    await Promise.allSettled(watcherEntries.map(({ watcher }) => watcher.close()))
+    controller.abort(error)
+    await closing
     return WatchResult.fromError(error)
   }
-  for (const { watcher } of watcherEntries) {
-    watcher.on('all', callback)
-  }
-  const controller = new AbortController()
-  controller.signal.addEventListener(
-    'abort',
-    () => {
-      void Promise.allSettled(watcherEntries.map(({ watcher }) => watcher.close()))
-    },
-    { once: true },
-  )
-  WatcherState.add(id, controller)
-  const inotifyWatchCount = await GetInotifyWatchCount.getInotifyWatchCount()
-  if (inotifyWatchCount === undefined) {
-    return WatchResult.success
-  }
-  return WatchResult.successWithInotifyWatchCount(inotifyWatchCount)
 }
