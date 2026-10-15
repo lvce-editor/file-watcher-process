@@ -7,6 +7,7 @@ import * as GetInotifyWatchCount from '../GetInotifyWatchCount/GetInotifyWatchCo
 import * as NormalizeEvent2 from '../NormalizeEvent2/NormalizeEvent2.ts'
 import * as SharedProcess from '../SharedProcess/SharedProcess.ts'
 import * as WaitForWatcherToBeReady from '../WaitForWatcherToBeReady/WaitForWatcherToBeReady.ts'
+import { watchChildren } from '../WatchChildren/WatchChildren.ts'
 import * as WatcherState from '../WatcherState/WatcherState.ts'
 import * as WatchResult from '../WatchResult/WatchResult.ts'
 
@@ -99,7 +100,7 @@ export const watchFolders = async ({
     return WatchResult.fromError(new Error(`watcher ${id} is already registered`))
   }
   const controller = new AbortController()
-  const watcherEntries: { readonly readyPromise: Promise<void>; readonly watcher: FSWatcher }[] = []
+  const watcherEntries: { readonly readyPromise: Promise<void>; readonly watcher: { close(): Promise<void> } }[] = []
   let ready = false
   let closing: Promise<unknown> | undefined
   const callback = (eventName: string, path: string): void => {
@@ -134,6 +135,12 @@ export const watchFolders = async ({
       const ignored = (candidate: string, stats?: { isDirectory(): boolean }): boolean =>
         excluded(candidate, stats) || !!childFilter?.(candidate)
       controller.signal.throwIfAborted()
+      if (childNames !== undefined) {
+        const entry = watchChildren(path, childNames, ignored, controller.signal, callback, errorCallback)
+        void entry.readyPromise.catch(() => {})
+        watcherEntries.push({ readyPromise: entry.readyPromise, watcher: entry })
+        continue
+      }
       const watcher = new FSWatcher({
         ...(depth !== undefined && { depth }),
         ignored,
