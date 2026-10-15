@@ -187,3 +187,23 @@ test('targeted shallow watches report config creation and changes while ignoring
     await folder[Symbol.asyncDispose]()
   }
 })
+
+test('targeted filesystem-root metadata watches become ready without inspecting unrelated system files', async () => {
+  const watcherProcess = createFileWatcherProcess()
+  const { parse } = await import('node:path')
+  const { tmpdir } = await import('node:os')
+  try {
+    await expect(
+      watcherProcess.invoke('FileWatcher.watchFolders', {
+        childNames: ['tsconfig.json', 'jsconfig.json', 'package.json'],
+        depth: 0,
+        exclude: [],
+        id: 5,
+        roots: [pathToFileURL(parse(tmpdir()).root).toString()],
+      }),
+    ).resolves.toMatchObject({ ok: true })
+    await watcherProcess.invoke('FileWatcher.dispose', 5)
+  } finally {
+    watcherProcess[Symbol.dispose]()
+  }
+})
